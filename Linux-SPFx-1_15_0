@@ -1,0 +1,45 @@
+FROM node:16.15.1
+
+# Docker file to create an Linux image for SPfx development using @microsoft/sharepoint generator
+# and the Microsoft CLI. I use this Docker build file to support training of SPFx developers
+# please note that although this is a public repository it may not support the latest features
+# as I only update the repository occassionally.
+#
+# Note: For more information about using SPFx and Docker, please see Waldek's comprehensive
+# work and repository
+# https://github.com/waldekmastykarz
+
+# Use Docker Build . to create the image and upload it to Docker Desktop
+# i.e Docker build -t rireland/spfx-mcli:1.15.0
+
+# This version uses SPfx 1.15.0 which does not include a local workbench
+# all testing must be done using the hosted workbench with a SharePoint Online site
+# see the 1.15.0 release notes for more information
+# https://docs.microsoft.com/en-us/sharepoint/dev/spfx/release-1.15
+
+# Expose network ports for local testing
+EXPOSE 5432 4321 35729
+
+# Set up environment variables and path
+ENV NPM_CONFIG_PREFIX=/usr/app/.npm-global \
+  PATH=$PATH:/usr/app/.npm-global/bin
+
+# Create a working directory called /usr/app/spfx
+VOLUME /usr/app/spfx
+
+# Change to the working directory
+WORKDIR /usr/app/spfx
+
+# Create a user called spfx and set permissions recursilvely on /usr/app folder
+RUN useradd --create-home --shell /bin/bash spfx && \
+    usermod -aG sudo spfx && \
+    chown -R spfx:spfx /usr/app
+
+# Change the user
+USER spfx
+
+# Use Node Package Manager to install the pre requisites for SPfx development
+RUN npm i -g gulp@4 yo @microsoft/generator-sharepoint@1.15.0 @pnp/cli-microsoft365
+
+# Open the command prompt
+CMD /bin/bash
